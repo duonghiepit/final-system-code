@@ -1,6 +1,8 @@
 # 🚀 Hệ Thống ML Dự Đoán Hành Vi Mua Hàng Của Khách Hàng
 
 Một pipeline MLOps chuyển đổi dữ liệu hành vi thương mại điện tử thành các dự đoán mua hàng thời gian thực. Được xây dựng trên các công nghệ mã nguồn mở hiện đại bao gồm Kafka, Flink, Spark, Ray và MLflow, dự án này minh họa một vòng đời ML hoàn chỉnh từ việc thu nạp dữ liệu đến triển khai mô hình. Hệ thống có tính năng CDC (Change Data Capture - Bắt Dữ liệu Thay đổi) tự động, kho dữ liệu đa tầng, cung cấp đặc trưng (feature serving) thời gian thực và khả năng quan sát (observability) toàn diện.
+![image](https://github.com/user-attachments/assets/23337100-955e-4ec3-aa81-cd673af06044)
+
 
 ## 📑 Mục lục
 
