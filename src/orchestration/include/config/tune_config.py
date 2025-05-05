@@ -65,6 +65,7 @@ XGBOOST_PARAMS = {
     "eta": 0.3,
     "subsample": 0.8,
     "colsample_bytree": 0.8,
+    "scale_pos_weight": 49.15,
 }
 
 # Feature Configuration
@@ -118,6 +119,7 @@ TUNE_SEARCH_SPACE = {
     "subsample": tune.uniform(0.5, 1.0),
     "colsample_bytree": tune.uniform(0.5, 1.0),
     "gamma": tune.uniform(0, 1),
+    "scale_pos_weight": tune.uniform(45, 60),
 }
 
 # Model Configuration
