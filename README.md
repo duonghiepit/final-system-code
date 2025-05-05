@@ -1,592 +1,183 @@
-# 🚀 Customer Purchase Prediction ML System
+# 🚀 Hệ Thống ML Dự Đoán Hành Vi Mua Hàng Của Khách Hàng
 
-A MLOps pipeline that transforms e-commerce behavior data into real-time purchase predictions. Built on modern open-source technologies including Kafka, Flink, Spark, Ray, and MLflow, this project demonstrates a complete ML lifecycle from data ingestion through model deployment. The system features automated CDC, multi-layer data warehousing, real-time feature serving, and comprehensive observability.
+Một pipeline MLOps chuyển đổi dữ liệu hành vi thương mại điện tử thành các dự đoán mua hàng thời gian thực. Được xây dựng trên các công nghệ mã nguồn mở hiện đại bao gồm Kafka, Flink, Spark, Ray và MLflow, dự án này minh họa một vòng đời ML hoàn chỉnh từ việc thu nạp dữ liệu đến triển khai mô hình. Hệ thống có tính năng CDC (Change Data Capture - Bắt Dữ liệu Thay đổi) tự động, kho dữ liệu đa tầng, cung cấp đặc trưng (feature serving) thời gian thực và khả năng quan sát (observability) toàn diện.
 
-![Architecture](./docs/pipeline.png)
+## 📑 Mục lục
 
-## 📑 Table of Contents
+  - [📊 Tập Dữ liệu](https://www.google.com/search?q=%23-t%E1%BA%ADp-d%E1%BB%AF-li%E1%BB%87u)
+      - [Cấu trúc tệp](https://www.google.com/search?q=%23c%E1%BA%A5u-tr%C3%BAc-t%E1%BB%87p)
+      - [Các loại sự kiện](https://www.google.com/search?q=%23c%C3%A1c-lo%E1%BA%A1i-s%E1%BB%B1-ki%E1%BB%87n)
+      - [Mô hình hóa: Dự đoán Hành vi Mua hàng của Khách hàng](https://www.google.com/search?q=%23m%C3%B4-h%C3%ACnh-h%C3%B3a-d%E1%BB%B1-%C4%91o%C3%A1n-h%C3%A0nh-vi-mua-h%C3%A0ng-c%E1%BB%A7a-kh%C3%A1ch-h%C3%A0ng)
+  - [🌐 Tổng Quan Kiến Trúc](https://www.google.com/search?q=%23-t%E1%BB%95ng-quan-ki%E1%BA%BFn-tr%C3%BAc)
+      - [1. Luồng Dữ liệu (Data Pipeline)](https://www.google.com/search?q=%231-lu%E1%BB%93ng-d%E1%BB%AF-li%E1%BB%87u-data-pipeline)
+          - [📤 Nguồn Dữ liệu](https://www.google.com/search?q=%23-ngu%E1%BB%93n-d%E1%BB%AF-li%E1%BB%87u)
+          - [✅ Xác thực Lược đồ (Schema Validation)](https://www.google.com/search?q=%23-x%C3%A1c-th%E1%BB%B1c-l%C6%B0%E1%BB%A3c-%C4%91%E1%BB%93-schema-validation)
+          - [☁️ Tầng Lưu trữ](https://www.google.com/search?q=%23-t%E1%BA%A7ng-l%C6%B0u-tr%E1%BB%AF)
+          - [🛒 Spark Streaming](https://www.google.com/search?q=%23-spark-streaming)
+      - [2. Luồng Huấn luyện (Training Pipeline)](https://www.google.com/search?q=%232-lu%E1%BB%93ng-hu%E1%BA%A5n-luy%E1%BB%87n-training-pipeline)
+          - [🌟 Huấn luyện Phân tán](https://www.google.com/search?q=%23-hu%E1%BA%A5n-luy%E1%BB%87n-ph%C3%A2n-t%C3%A1n)
+          - [📦 Quản lý Mô hình](https://www.google.com/search?q=%23-qu%E1%BA%A3n-l%C3%BD-m%C3%B4-h%C3%ACnh)
+      - [3. Luồng Phục vụ (Serving Pipeline)](https://www.google.com/search?q=%233-lu%E1%BB%93ng-ph%E1%BB%A5c-v%E1%BB%A5-serving-pipeline)
+          - [⚡ Phục vụ Mô hình (Model Serving)](https://www.google.com/search?q=%23-ph%E1%BB%A5c-v%E1%BB%A5-m%C3%B4-h%C3%ACnh-model-serving)
+          - [🔍 Dịch vụ Đặc trưng (Feature Service)](https://www.google.com/search?q=%23-d%E1%BB%8Bch-v%E1%BB%A5-%C4%91%E1%BA%B7c-tr%C6%B0ng-feature-service)
+      - [4. Khả năng Quan sát (Observability)](https://www.google.com/search?q=%234-kh%E1%BA%A3-n%C4%83ng-quan-s%C3%A1t-observability)
+          - [📡 Chỉ số & Giám sát](https://www.google.com/search?q=%23-ch%E1%BB%89-s%E1%BB%91--gi%C3%A1m-s%C3%A1t)
+          - [🔒 Quản lý Truy cập](https://www.google.com/search?q=%23-qu%E1%BA%A3n-l%C3%BD-truy-c%E1%BA%ADp)
 
-- [📊 Dataset](#-dataset)
-  - [File Structure](#file-structure)
-  - [Event Types](#event-types)
-  - [Modeling: Customer Purchase Prediction](#modeling-customer-purchase-prediction)
-- [🌐 Architecture Overview](#-architecture-overview)
-  - [1. Data Pipeline](#1-data-pipeline)
-    - [📤 Data Sources](#-data-sources)
-    - [✅ Schema Validation](#-schema-validation)
-    - [☁️ Storage Layer](#-storage-layer)
-    - [🛒 Spark Streaming](#-spark-streaming)
-  - [2. Training Pipeline](#2-training-pipeline)
-    - [🌟 Distributed Training](#-distributed-training)
-    - [📦 Model Management](#-model-management)
-  - [3. Serving Pipeline](#3-serving-pipeline)
-    - [⚡ Model Serving](#-model-serving)
-    - [🔍 Feature Service](#-feature-service)
-  - [4. Observability](#4-observability)
-    - [📡 Metrics & Monitoring](#-metrics--monitoring)
-    - [🔒 Access Management](#-access-management)
-- [📖 Details](#-details)
-  - [🔧 Setup Environment Variables](#-setup-environment-variables)
-  - [🏁 Start Data Pipeline](#-start-data-pipeline)
-  - [✅ Start Schema Validation Job](#-start-schema-validation-job)
-  - [☁️ Start Data Lake](#-start-data-lake)
-  - [🔄 Start Orchestration](#-start-orchestration)
-  - [Data and Training Pipeline](#data-and-training-pipeline)
-    - [🔄 Data Pipeline](#-data-pipeline-1)
-    - [🤼‍♂️ Training Pipeline](#-training-pipeline-1)
-    - [📦 Start Online Store](#-start-online-store)
-  - [🚀 Start Serving Pipeline](#-start-serving-pipeline)
-  - [🔎 Start Observability](#-start-observability)
-    - [📈 SigNoz](#-signoz)
-    - [📉 Prometheus and Grafana](#-prometheus-and-grafana)
-  - [🔒 NGINX](#-nginx)
-- [Contributing](#contributing)
-- [📃 License](#-license)
+## 📊 Tập Dữ liệu
 
-## 📊 Dataset
+> Dữ liệu Hành vi Thương mại Điện tử từ Cửa hàng Đa danh mục
 
-> eCommerce Behavior Data from Multi Category Store
+Tập dữ liệu có thể được tìm thấy [tại đây](https://www.kaggle.com/datasets/mkechinov/ecommerce-behavior-data-from-multi-category-store/data). Tập dữ liệu này chứa dữ liệu hành vi từ hơn 285 triệu sự kiện người dùng trên một trang web thương mại điện tử đa danh mục lớn.
 
-The dataset can be found [here](https://www.kaggle.com/datasets/mkechinov/ecommerce-behavior-data-from-multi-category-store/data). This dataset contains behavior data from over 285 million user events on a large multi-category eCommerce website.
+Dữ liệu kéo dài 7 tháng (từ tháng 10 năm 2019 đến tháng 4 năm 2020) và ghi lại các tương tác giữa người dùng và sản phẩm như lượt xem, thêm/xóa khỏi giỏ hàng và mua hàng. Mỗi sự kiện đại diện cho một mối quan hệ nhiều-nhiều giữa người dùng và sản phẩm.
 
-The data spans 7 months (October 2019 to April 2020) and captures user-product interactions like views, cart additions/removals, and purchases. Each event represents a many-to-many relationship between users and products.
+Tập dữ liệu được thu thập bởi dự án Open CDP, một nền tảng dữ liệu khách hàng mã nguồn mở cho phép theo dõi và phân tích dữ liệu hành vi người dùng.
 
-The dataset was collected by the Open CDP project, an open source customer data platform that enables tracking and analysis of user behavior data.
+### Cấu trúc tệp
 
-### File Structure
+| Trường         | Mô tả                                                                |
+| -------------- | -------------------------------------------------------------------- |
+| event\_time     | Dấu thời gian UTC khi sự kiện xảy ra                                  |
+| event\_type     | Loại sự kiện tương tác của người dùng                                    |
+| product\_id     | Mã định danh duy nhất cho sản phẩm                                     |
+| category\_id    | Mã định danh danh mục sản phẩm                                        |
+| category\_code  | Phân loại danh mục sản phẩm (khi có sẵn cho các danh mục có ý nghĩa) |
+| brand          | Tên thương hiệu (chữ thường, có thể thiếu)                            |
+| price          | Giá sản phẩm (số thực - float)                                         |
+| user\_id        | Mã định danh người dùng vĩnh viễn                                       |
+| user\_session   | ID phiên tạm thời, thay đổi sau thời gian dài người dùng không hoạt động |
 
-| Field         | Description                                                          |
-| ------------- | -------------------------------------------------------------------- |
-| event_time    | UTC timestamp when the event occurred                                |
-| event_type    | Type of user interaction event                                       |
-| product_id    | Unique identifier for the product                                    |
-| category_id   | Product category identifier                                          |
-| category_code | Product category taxonomy (when available for meaningful categories) |
-| brand         | Brand name (lowercase, may be missing)                               |
-| price         | Product price (float)                                                |
-| user_id       | Permanent user identifier                                            |
-| user_session  | Temporary session ID that changes after long user inactivity         |
+### Các loại sự kiện
 
-### Event Types
+Tập dữ liệu ghi lại bốn loại tương tác của người dùng:
 
-The dataset captures four types of user interactions:
+  - **view**: Người dùng đã xem một sản phẩm
+  - **cart**: Người dùng đã thêm một sản phẩm vào giỏ hàng
+  - **remove\_from\_cart**: Người dùng đã xóa một sản phẩm khỏi giỏ hàng
+  - **purchase**: Người dùng đã mua một sản phẩm
 
-- **view**: User viewed a product
-- **cart**: User added a product to shopping cart
-- **remove_from_cart**: User removed a product from shopping cart
-- **purchase**: User purchased a product
+### Mô hình hóa: Dự đoán Hành vi Mua hàng của Khách hàng
 
-### Modeling: Customer Purchase Prediction
+Nhiệm vụ mô hình hóa cốt lõi là dự đoán liệu người dùng có mua một sản phẩm tại thời điểm họ thêm nó vào giỏ hàng hay không.
 
-The core modeling task is to predict whether a user will purchase a product at the moment they add it to their shopping cart.
+#### Kỹ thuật Đặc trưng (Feature Engineering)
 
-#### Feature Engineering
+Chúng tôi biến đổi dữ liệu sự kiện thô thành các đặc trưng có ý nghĩa cho mô hình học máy của mình. Phân tích tập trung đặc biệt vào các sự kiện thêm vào giỏ hàng và kết quả tiếp theo của chúng.
 
-We transform the raw event data into meaningful features for our machine learning model. The analysis focuses specifically on cart addition events and their subsequent outcomes.
+Các đặc trưng được thiết kế chính bao gồm:
 
-Key engineered features include:
+| Đặc trưng            | Mô tả                                                           |
+| -------------------- | --------------------------------------------------------------- |
+| category\_code\_level1 | Danh mục sản phẩm chính                                         |
+| category\_code\_level2 | Danh mục phụ của sản phẩm                                       |
+| event\_weekday        | Ngày trong tuần khi sự kiện thêm vào giỏ hàng xảy ra             |
+| activity\_count       | Tổng số hoạt động của người dùng trong phiên hiện tại            |
+| price                | Giá gốc của sản phẩm                                             |
+| brand                | Tên thương hiệu sản phẩm                                        |
+| is\_purchased         | Biến mục tiêu: liệu mặt hàng trong giỏ hàng cuối cùng có được mua không |
 
-| Feature              | Description                                                 |
-| -------------------- | ----------------------------------------------------------- |
-| category_code_level1 | Main product category                                       |
-| category_code_level2 | Product sub-category                                        |
-| event_weekday        | Day of week when cart addition occurred                     |
-| activity_count       | Total user activities in the current session                |
-| price                | Original product price                                      |
-| brand                | Product brand name                                          |
-| is_purchased         | Target variable: whether cart item was eventually purchased |
+Bạn có thể tải tập dữ liệu về và đặt nó vào thư mục `data`.
 
-You can download the dataset and put it under the `data` folder.
+## 🌐 Tổng Quan Kiến Trúc
 
-## 🌐 Architecture Overview
+Hệ thống bao gồm bốn thành phần chính—**Dữ liệu (Data)**, **Huấn luyện (Training)**, **Phục vụ (Serving)**, và **Khả năng Quan sát (Observability)**—cùng với một **Môi trường Phát triển (Dev Environment)** và một **Kho Mô hình (Model Registry)**.
 
-The system comprises four main components—**Data**, **Training**, **Serving**, and **Observability**—alongside a **Dev Environment** and a **Model Registry**.
+### 1\. Luồng Dữ liệu (Data Pipeline)
 
-### 1. Data Pipeline
+#### 📤 Nguồn Dữ liệu
 
-#### 📤 Data Sources
+  - **Kafka Producer**: Liên tục phát các sự kiện hành vi người dùng đến topic `tracking.raw_user_behavior`
+  - **Dịch vụ CDC**: Sử dụng Debezium để bắt các thay đổi trong PostgreSQL, truyền dữ liệu đến `tracking_postgres_cdc.public.events`
 
-- **Kafka Producer**: Continuously emits user behavior events to `tracking.raw_user_behavior` topic
-- **CDC Service**: Uses Debezium to capture PostgreSQL changes, streaming to `tracking_postgres_cdc.public.events`
+#### ✅ Xác thực Lược đồ (Schema Validation)
 
-#### ✅ Schema Validation
+  - Xác thực các sự kiện đến từ cả hai nguồn
+  - Định tuyến các sự kiện đến:
+      - `tracking.user_behavior.validated` cho các sự kiện hợp lệ
+      - `tracking.user_behavior.invalid` cho các vi phạm lược đồ
+  - Xử lý khoảng 10 nghìn sự kiện/giây
+  - Cảnh báo các sự kiện không hợp lệ đến Elasticsearch
 
-- Validates incoming events from both sources
-- Routes events to:
-  - `tracking.user_behavior.validated` for valid events
-  - `tracking.user_behavior.invalid` for schema violations
-- Handles ~10k events/second
-- Alerts invalid events to Elasticsearch
+#### ☁️ Tầng Lưu trữ
 
-#### ☁️ Storage Layer
-
-- **Data Lake (MinIO)**:
-  - External Storage
-  - Stores data in time-partitioned buckets (year/month/day/hour)
-  - Supports checkpointing for pipeline resilience
-- **Data Warehouse (PostgreSQL)**:
-  - Organized in bronze → silver → gold layers
-  - Houses dimension/fact tables for analysis purposes
-- **Offline Store (PostgreSQL)**:
-  - Used for training and batch feature serving
-  - Periodically materialized to online store
-- **Online Store (Redis)**:
-  - Low-latency feature serving
-  - Updated through streaming pipeline
-  - Exposed via Feature Retrieval API
+  - **Data Lake (MinIO)**:
+      - Lưu trữ Ngoài (External Storage)
+      - Lưu trữ dữ liệu trong các bucket được phân vùng theo thời gian (năm/tháng/ngày/giờ)
+      - Hỗ trợ điểm kiểm tra (checkpointing) cho khả năng phục hồi của pipeline
+  - **Data Warehouse (PostgreSQL)**:
+      - Tổ chức theo các lớp bronze → silver → gold
+      - Chứa các bảng dimension/fact cho mục đích phân tích
+  - **Offline Store (PostgreSQL)**:
+      - Được sử dụng để huấn luyện và cung cấp đặc trưng theo lô (batch feature serving)
+      - Được cụ thể hóa (materialized) định kỳ vào online store
+  - **Online Store (Redis)**:
+      - Cung cấp đặc trưng với độ trễ thấp
+      - Được cập nhật thông qua luồng xử lý streaming
+      - Được cung cấp thông qua API Truy xuất Đặc trưng (Feature Retrieval API)
 
 #### 🛒 Spark Streaming
 
-- Transforms validated events into ML features
-- Focuses on session-based metrics and purchase behavior
-- Dual-writes to online/offline stores
-
-### 2. Training Pipeline
-
-#### 🌟 Distributed Training
-
-- **Ray Cluster**:
-  - Handles distributed hyperparameter tuning via Ray Tune
-  - Executes final model training
-  - Integrates with MLflow for experiment tracking
-
-#### 📦 Model Management
-
-- **MLflow + MinIO + PostgreSQL**:
-  - Tracks experiments, parameters, and metrics
-  - Versions model artifacts
-  - Provides model registry UI at `localhost:5001`
-
-### 3. Serving Pipeline
-
-#### ⚡ Model Serving
-
-- **Ray Serve**:
-  - Loads models from MLflow registry
-  - Automatically scales horizontally for high throughput
-  - Provides REST API for predictions
-- **Feature Service**:
-  - FastAPI endpoint for feature retrieval
-  - Integrates with Redis for real-time features
-
-### 4. Observability
-
-#### 📡 Metrics & Monitoring
-
-- **SigNoz**:
-  - Collects OpenTelemetry data
-  - Provides service-level monitoring
-  - Accessible at `localhost:3301`
-- **Ray Dashboard**:
-  - Monitors training/serving jobs
-  - Available at `localhost:8265`
-- **Prometheus + Grafana**:
-  - Tracks Ray cluster metrics
-  - Visualizes system performance
-  - Accessible at `localhost:3009`
-- **Superset**:
-  - Visualize the data in the Data Warehouse
-  - Accessible at `localhost:8089`
-- **Elasticsearch**:
-  - Alert invalid events
-
-#### 🔒 Access Management
-
-- **NGINX Proxy Manager**:
-  - Reverse proxy for all services
-  - SSL/TLS termination
-  - Access control and routing
-
-The architecture prioritizes reliability, scalability, and observability while maintaining clear separation of concerns between pipeline stages. Each component is containerized and can be deployed independently using Docker Compose.
-
----
-
-## 📖 Details
-
-All available commands can be found in the `Makefile`.
-
-In this section, we will dive into the details of the system.
-
-### 🔧 Setup Environment Variables
-
-Please run the following command to setup the `.env` files:
-
-```bash
-cp .env.example .env
-cp ./src/cdc/.env.example ./src/cdc/.env
-cp ./src/model_registry/.env.example ./src/model_registry/.env
-cp ./src/orchestration/.env.example ./src/orchestration/.env
-cp ./src/producer/.env.example ./src/producer/.env
-cp ./src/streaming/.env.example ./src/streaming/.env
-```
-
-**Note**: I don't use any secrets in this project, so run the above command and you are good to go.
-
-### 🏁 Start Data Pipeline
-
-I will use the same network for all the services, first we need to create the network.
-
-```bash
-make up-network
-```
-
-#### 🐟 Start Kafka
-
-```bash
-make up-kafka
-```
-
-The last service in the `docker-compose.kafka.yaml` file is `kafka_producer`, this service acts as a producer and will start sending messages to the `tracking.raw_user_behavior` topic.
-
-To check if Kafka is running, you can go to `localhost:9021` and you should see the Kafka dashboard. Then go to the `Topics` tab and you should see `tracking.raw_user_behavior` topic.
-
-![Kafka Topics](./docs/images/kafka-topic.jpg)
-
-To check if the producer is sending messages, you can click on the `tracking.raw_user_behavior` topic and you should see the messages being sent.
-
-![Kafka Messages](./docs/images/kafka-message.jpg)
-
-Here is an example of the message's value in the `tracking.raw_user_behavior` topic:
-
-```json
-{
-  "schema": {
-    "type": "struct",
-    "fields": [
-      {
-        "name": "event_time",
-        "type": "string"
-      },
-      {
-        "name": "event_type",
-        "type": "string"
-      },
-      {
-        "name": "product_id",
-        "type": "long"
-      },
-      {
-        "name": "category_id",
-        "type": "long"
-      },
-      {
-        "name": "category_code",
-        "type": ["null", "string"],
-        "default": null
-      },
-      {
-        "name": "brand",
-        "type": ["null", "string"],
-        "default": null
-      },
-      {
-        "name": "price",
-        "type": "double"
-      },
-      {
-        "name": "user_id",
-        "type": "long"
-      },
-      {
-        "name": "user_session",
-        "type": "string"
-      }
-    ]
-  },
-  "payload": {
-    "event_time": "2019-10-01 02:30:12 UTC",
-    "event_type": "view",
-    "product_id": 1306133,
-    "category_id": "2053013558920217191",
-    "category_code": "computers.notebook",
-    "brand": "xiaomi",
-    "price": 1029.37,
-    "user_id": 512900744,
-    "user_session": "76b918d5-b344-41fc-8632-baf222ec760f"
-  }
-}
-```
-
-#### 🔄 Start CDC (2)
-
-```bash
-make up-cdc
-```
-
-Next, we start the CDC (Change Data Capture) service using Docker Compose. This setup includes the following components:
-
-- Debezium: Monitors the Backend DB for any changes (inserts, updates, deletes) and captures those changes.
-- PostgreSQL: The database where the changes are being monitored.
-- A Python service: Registers the connector, creates the table, and inserts the data into PostgreSQL.
-
-Steps involved:
-
-- Debezium monitors the Backend DB for any changes. (2.1)
-- Debezium captures these changes and pushes them to the Raw Events Topic in the message broker. (2.2)
-
-The data is automatically synced from PostgreSQL to the `tracking_postgres_cdc.public.events` topic. To confirm this, go to the `Connect` tab in the Kafka UI; you should see a connector named `cdc-postgresql`.
-
-![Kafka Connectors](./docs/images/kafka-connectors.jpg)
-
-Return to `localhost:9021`; there should be a new topic called `tracking_postgres_cdc.public.events`.
-
-![Kafka Topics](./docs/images/kafka-topic-cdc.jpg)
-
-### ✅ Start Schema Validation Job
-
-```bash
-make schema_validation
-```
-
-This is a Flink job that will consume the `tracking_postgres_cdc.public.events` and `tracking.raw_user_behavior` topics and validate the schema of the events. The validated events will be sent to the `tracking.user_behavior.validated` topic and the invalid events will be sent to the `tracking.user_behavior.invalid` topic, respectively. For easier understanding, I don't push these Flink jobs into a Docker Compose file, but you can do it if you want. Watch the terminal to see the job running, the log may look like this:
-
-![Schema Validation Job](./docs/images/schema-validation-job-log.jpg)
-
-We can handle `10k RPS`, noting that approximately `10%` of events are failures. I purposely make the producer send invalid events to the `tracking.user_behavior.invalid` topic. You can check this at line `127` in `src/producer/produce.py`.
-
-After starting the job, you can go to `localhost:9021` and you should see the `tracking.user_behavior.validated` and `tracking.user_behavior.invalid` topics.
-
-![Kafka Topics](./docs/images/kafka-topic-schema-validation.jpg)
-
-Beside that, we can also start the `alert_invalid_events` job to alert the invalid events.
-
-```bash
-make alert_invalid_events
-```
-
-**Note**: This feature of pushing the invalid events to **Elasticsearch** is not implemented yet, I will implement it in the future, but you can do it easily by modifying the `src/streaming/jobs/alert_invalid_events_job.py` file.
-
-### 🔄 Transformation Job (4)
-
-First, we need to start the Data Warehouse and the Online Store.
-
-```bash
-make up-dwh
-make up-online-store
-```
-
-#### 📦 Data Warehouse
-
-The Data Warehouse is just a **PostgreSQL** instance.
-
-#### 📦 Online Store
-
-The Online Store is a **Redis** instance.
-
-Look at the `docker-compose.online-store.yaml` file, you will see 2 services, the `redis` service and the `feature-retrieval` service. The `redis` service is the Online Store, and the `feature-retrieval` service is the Feature Retrieval service.
-
-The `feature-retrieval` service is a Python service that will run the following commands:
-
-```bash
-python api.py # Start a simple FastAPI app to retrieve the features
-```
-
-To view the Swagger UI, you can go to `localhost:8001/docs`. But before that, you need to run the `ingest_stream` job.
-
-#### 🔄 Spark Streaming Job
-
-Then, we need to start the transformation job.
-
-```bash
-make ingest_stream
-```
-
-This is a **Spark Streaming** job that consumes events from the `tracking.user_behavior.validated` topic. It transforms raw user behavior data into structured machine learning features, focusing on session-based metrics and purchase behavior. The transformed data is then **pushed to both online and offline feature stores**, enabling real-time and batch feature serving for ML models. Periodically, the data is materialized to the online store.
-
-The terminal will look like this:
-
-![Spark Streaming Job](./docs/images/spark-streaming-job.jpg)
-
-Beside that, you can use any tool to visualize the offline store, for example, you can use `DataGrip` to connect to the `dwh` database and you should see the `feature_store` schema.
-
-![DataGrip Offline Store](./docs/images/data-grip-offline-store.jpg)
-
-### 🔄 Data and Training Pipeline (5 & 6)
-
-```bash
-make up-orchestration
-```
-
-This will start the Airflow service and the other services that are needed for the orchestration. Here is the list of services that will be started:
-
-- MinIO (Data Lake)
-- PostgreSQL (Data Warehouse)
-- Ray Cluster
-- MLflow (Model Registry)
-- Prometheus & Grafana (for Ray monitoring)
-
-**Relevant URLs:**
-
-- 🔗 Airflow UI: `localhost:8080` (user/password: `airflow:airflow`)
-- 📊 Ray Dashboard: `localhost:8265`
-- 📉 Grafana: `localhost:3009` (user/password: `admin:admin`)
-- 🖥️ MLflow UI: `localhost:5001`
-
-Go to the Airflow UI (default user and password is `airflow:airflow`) and you should see the `data_pipeline` and `training_pipeline` DAGs. These 2 DAGs are automatically triggered, but you can also trigger them manually.
-
-![Airflow DAGs](./docs/images/airflow-dags.jpg)
-
-#### 🔄 Data Pipeline (5)
-
-##### Data Lake
-
-Data from external sources is ingested into the Data Lake, then transformed into a format suitable for the Data Warehouse for analysis purposes.
-
-To make it simple, I used the data from the `tracking.user_behavior.validated` topic in this `data_pipeline` DAG. To end this, we first start the Data Lake, then we create a connector to ingest the data from the `tracking.user_behavior.validated` topic to the Data Lake.
-
-```bash
-make up-data-lake
-```
-
-The Data Lake is a **MinIO** instance, you can see the UI at `localhost:9001` (user/password: `minioadmin:minioadmin`).
-
-Next, we need to create a connector to ingest the data from the `tracking.user_behavior.validated` topic to the Data Lake.
-
-```bash
-make deploy_s3_connector
-```
-
-To see the MinIO UI, you can go to `localhost:9001` (default user and password is `minioadmin:minioadmin`). There are 2 buckets, `validated-events-bucket` and `invalidated-events-bucket`, you can go to each bucket and you should see the events being synced.
-
-![MinIO Buckets](./docs/images/minio-buckets.jpg)
-
-Each record in buckets is a JSON file, you can click on the file and you should see the event.
-
-![MinIO Record](./docs/images/minio-record.jpg)
-
-##### Data Pipeline
-
-The `data_pipeline` DAG is divided into three layers:
-
-![Data Pipeline DAG](./docs/images/data-pipeline-dag.jpg)
-
-###### Bronze Layer:
-
-1. **ingest_raw_data** - Ingests raw data from the Data Lake.
-2. **quality_check_raw_data** - Performs validations on the ingested raw data, ensuring data integrity.
-
-###### Silver Layer:
-
-3. **transform_data** - Cleans and transforms validated raw data, preparing it for downstream usage.
-
-###### Gold Layer:
-
-4. **create dim and fact tables** - Creates dimension and fact tables in the Data Warehouse for analysis.
-
-Trigger the `data_pipeline` DAG, and you should see the tasks running. This DAG will take some time to complete, but you can check the logs in the Airflow UI to monitor the progress. For simplicity, I hardcoded the `MINIO_PATH_PREFIX` to `topics/tracking.user_behavior.validated/year=2025/month=01`. Ideally, you should use the actual timestamp for each run. For example, `validated-events-bucket/topics/tracking.user_behavior.validated/year=2025/month=01/day=07/hour=XX`, where XX is the hour of the day.
-
-I also use checkpointing to ensure the DAG is resilient to failures and can resume from where it left off. The checkpoint is stored in the Data Lake, just under the `MINIO_PATH_PREFIX`, so if the DAG fails, you can simply trigger it again, and it will resume from the last checkpoint.
-
-To visualize the data, you can use **Superset**.
-
-```bash
-make up-superset
-```
-
-Then go to `localhost:8089` and you should see the Superset dashboard. Connect to the `dwh` database and you should see the `dwh` schema.
-
-#### 🤼‍♂️ Training Pipeline (6)
-
-The `training_pipeline` DAG is composed of these steps:
-
-![Training Pipeline DAG](./docs/images/training-pipeline-dag.jpg)
-
-1. **Load Data** - Pulls processed data from the Data Warehouse for use in training the machine learning model.
-2. **Tune Hyperparameters** - Utilizes Ray Tune to perform distributed hyperparameter tuning, optimizing the model's performance.
-3. **Train Final Model** - Trains the final machine learning model using the best hyperparameters from the tuning phase.
-4. **Save Results** - Saves the trained model and associated metrics to the Model Registry for future deployment and evaluation.
-
-Trigger the `training_pipeline` DAG, and you should see the tasks running. This DAG will take some time to complete, but you can check the logs in the Airflow UI to see the progress.
-
-![Training Pipeline Tasks](./docs/images/training-pipeline-tasks.jpg)
-
-After hitting the `Trigger DAG` button, you should see the tasks running. The `tune_hyperparameters` task will be `deferred` because it will submit the Ray Tune job to the Ray Cluster and use polling to check if the job is done. The same happens with the `train_final_model` task.
-
-When the `tune_hyperparameters` or `train_final_model` tasks are running, you can go to the Ray Dashboard at `localhost:8265` and you should see the tasks running.
-
-![Ray Dashboard](./docs/images/ray-dashboard.jpg)
-
-Click on the task and you should see the task details, including the id, status, time, logs, and more.
-
-![Ray Task Details](./docs/images/ray-task-details.jpg)
-
-To see the results of the training, you can go to the MLflow UI at `localhost:5001` and you should see the training results.
-
-![MLflow UI](./docs/images/mlflow-ui.jpg)
-
-The model will be versioned in the Model Registry, you can go to `localhost:5001` and hit the `Models` tab and you should see the model.
-
-![MLflow Models](./docs/images/mlflow-models.jpg)
-
-### 🚀 Start Serving Pipeline (7)
-
-```bash
-make up-serving
-```
-
-This command will start the Serving Pipeline. Note that we did not port forward the `8000` port in the `docker-compose.serving.yaml` file, but we just expose it. The reason is that we use Ray Serve, and the job will be submitted to the Ray Cluster. That is the reason why you see the port `8000` in the `docker-compose.serving.ray` file instead of the `docker-compose.serving.yaml` file.
-
-![Serving Pipeline](./docs/images/serving-pipeline-swagger-ui.jpg)
-
-Currently, you have to manually restart the Ray Serve job (aka docker container) to load new model from the Model Registry. But in the future, I will add a feature to automatically load the new model from the Model Registry (Jenkins).
-
-### 🔎 Start Observability (8)
-
-#### 📈 SigNoz
-
-```bash
-make up-observability
-```
-
-This command will start the Observability Pipeline. This is a SigNoz instance that will receive the data from the OpenTelemetry Collector. Go to `localhost:3301` and you should see the SigNoz dashboard.
-
-![Observability](./docs/images/signoz-1.jpg)
-
-![Observability](./docs/images/signoz-2.jpg)
-
-#### 📉 Prometheus and Grafana (9)
-
-To see the Ray Cluster information, you can go to `localhost:3009` (user/password: `admin:admin`) and you should see the Grafana dashboard.
-
-![Grafana](./docs/images/grafana.jpg)
-
-**Note**: If you dont see the dashboards, please remove the `tmp/ray` folder and then restart Ray Cluster and Grafana again.
-
-### 🔒 NGINX (10)
-
-```bash
-make up-nginx
-```
-
-This command will start the **NGINX Proxy Manager**, which provides a user-friendly interface for configuring reverse proxies and SSL certificates. Access the UI at `localhost:81` using the default credentials:
-
-- Username: `admin@example.com`
-- Password: `changeme`
-
-Key configuration options include:
-
-- Free SSL certificate management using:
-  - Let's Encrypt
-  - Cloudflare SSL
-- Free dynamic DNS providers:
-  - [DuckDNS](https://www.duckdns.org/)
-  - [YDNS](https://ydns.io/)
-  - [FreeDNS](https://freedns.afraid.org/)
-  - [Dynu](https://www.dynu.com/)
-- Setting up reverse proxies for services like Signoz, Ray Dashboard, MLflow, and Grafana.
-
-**Security Tip**: Change the default password immediately after first login to protect your proxy configuration.
-
-![NGINX Proxy Manager 1](./docs/images/nginx-proxy-manager-1.jpg)
-
-![NGINX Proxy Manager 2](./docs/images/nginx-proxy-manager-2.jpg)
-
----
-
-## Contributing
-
-This project is open to contributions. Please feel free to submit a PR.
-
-## 📃 License
-
-This project is provided under an MIT license. See the [LICENSE](LICENSE) file for details.
+  - Biến đổi các sự kiện đã được xác thực thành các đặc trưng ML
+  - Tập trung vào các chỉ số dựa trên phiên và hành vi mua hàng
+  - Ghi đồng thời vào cả online/offline stores
+
+### 2\. Luồng Huấn luyện (Training Pipeline)
+
+#### 🌟 Huấn luyện Phân tán
+
+  - **Cụm Ray (Ray Cluster)**:
+      - Xử lý tinh chỉnh siêu tham số phân tán thông qua Ray Tune
+      - Thực hiện huấn luyện mô hình cuối cùng
+      - Tích hợp với MLflow để theo dõi thử nghiệm
+
+#### 📦 Quản lý Mô hình
+
+  - **MLflow + MinIO + PostgreSQL**:
+      - Theo dõi các thử nghiệm, tham số và chỉ số
+      - Quản lý phiên bản các tạo tác mô hình (model artifacts)
+      - Cung cấp giao diện người dùng kho mô hình (model registry UI) tại `localhost:5001`
+
+### 3\. Luồng Phục vụ (Serving Pipeline)
+
+#### ⚡ Phục vụ Mô hình (Model Serving)
+
+  - **Ray Serve**:
+      - Tải mô hình từ kho MLflow
+      - Tự động mở rộng quy mô theo chiều ngang để đáp ứng thông lượng cao
+      - Cung cấp REST API cho các dự đoán
+  - **Dịch vụ Đặc trưng (Feature Service)**:
+      - Endpoint FastAPI để truy xuất đặc trưng
+      - Tích hợp với Redis cho các đặc trưng thời gian thực
+
+### 4\. Khả năng Quan sát (Observability)
+
+#### 📡 Chỉ số & Giám sát
+
+  - **SigNoz**:
+      - Thu thập dữ liệu OpenTelemetry
+      - Cung cấp giám sát cấp dịch vụ
+      - Truy cập tại `localhost:3301`
+  - **Ray Dashboard**:
+      - Giám sát các công việc huấn luyện/phục vụ
+      - Khả dụng tại `localhost:8265`
+  - **Prometheus + Grafana**:
+      - Theo dõi các chỉ số của cụm Ray
+      - Trực quan hóa hiệu năng hệ thống
+      - Truy cập tại `localhost:3009`
+  - **Superset**:
+      - Trực quan hóa dữ liệu trong Data Warehouse
+      - Truy cập tại `localhost:8089`
+  - **Elasticsearch**:
+      - Cảnh báo các sự kiện không hợp lệ
+
+#### 🔒 Quản lý Truy cập
+
+  - **NGINX Proxy Manager**:
+      - Proxy ngược (Reverse proxy) cho tất cả các dịch vụ
+      - Chấm dứt SSL/TLS (SSL/TLS termination)
+      - Kiểm soát truy cập và định tuyến
+
+Kiến trúc ưu tiên độ tin cậy, khả năng mở rộng và khả năng quan sát trong khi vẫn duy trì sự tách biệt rõ ràng các mối quan tâm giữa các giai đoạn của pipeline. Mỗi thành phần được đóng gói trong container và có thể được triển khai độc lập bằng Docker Compose.
+
+-----
