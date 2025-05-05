@@ -79,13 +79,13 @@ def tune_hyperparameters(data: dict) -> dict:
 
         # Configure tuning
         search_alg = OptunaSearch(
-            metric="train_rmse",
-            mode="min",
+            metric="train_auc",
+            mode="max",
         )
 
         scheduler = ASHAScheduler(
-            metric="train_rmse",
-            mode="min",
+            metric="train_auc",
+            mode="max",
             max_t=TUNE_CONFIG["max_epochs"],
             grace_period=TUNE_CONFIG["grace_period"],
         )
@@ -132,7 +132,10 @@ def tune_hyperparameters(data: dict) -> dict:
         )
 
         # Get best trial
-        best_trial = tuner.get_best_trial("train_rmse", "min")
+        best_trial = tuner.get_best_trial(
+            metric="train_auc",
+            mode="max",
+            scope="last")
 
         return {
             "best_config": best_trial.config,
